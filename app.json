@@ -2,7 +2,7 @@
   "expo": {
     "name": "MINIFOOT",
     "slug": "MINIFOOT",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "minifoot",
@@ -14,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ngoga.MINIFOOT",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,11 +34,7 @@
       "output": "static",
       "favicon": "./assets/images/icon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-sqlite",
-      "expo-font"
-    ],
+    "plugins": ["expo-router", "expo-sqlite", "expo-font"],
     "experiments": {
       "typedRoutes": true
     },
@@ -43,6 +43,7 @@
       "eas": {
         "projectId": "40fed050-0c10-4943-9517-cb2826160e53"
       }
-    }
+    },
+    "owner": "ngoga"
   }
 }

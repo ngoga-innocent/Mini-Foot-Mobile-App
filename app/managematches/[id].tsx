@@ -5,8 +5,6 @@ import { collection, doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,9 +17,9 @@ export default function MatchDetails() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const inset = useSafeAreaInsets();
+
   const [match, setMatch] = useState<any>(null);
   const [playersMap, setPlayersMap] = useState<any>({});
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -43,7 +41,7 @@ export default function MatchDetails() {
     return unsub;
   }, [id]);
 
-  // Animate on load
+  // Animate
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -57,20 +55,14 @@ export default function MatchDetails() {
   const scoreA = match.events?.filter((e: any) => e.team === "A").length || 0;
   const scoreB = match.events?.filter((e: any) => e.team === "B").length || 0;
 
+  const teamAPlayers = match.teamAPlayers || [];
+  const teamBPlayers = match.teamBPlayers || [];
   const events = match.events || [];
 
   return (
     <View style={styles.container}>
-      {/* 🔝 Top Bar */}
-      <View
-        style={[
-          styles.topBar,
-          {
-            backgroundColor: match.isLive ? "#dc2626" : "#111827",
-            paddingTop: inset.top + 10,
-          },
-        ]}
-      >
+      {/* 🔝 TOP BAR */}
+      <View style={[styles.topBar, { paddingTop: inset.top + 10 }]}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -81,7 +73,7 @@ export default function MatchDetails() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 🏆 Score Header */}
+        {/* 🏆 SCOREBOARD */}
         <View style={styles.scoreHeader}>
           <View style={styles.scoreRow}>
             <Text style={styles.teamName}>Team A</Text>
@@ -96,7 +88,42 @@ export default function MatchDetails() {
           </View>
         </View>
 
-        {/* ⚽ Goals List (LiveScore Style) */}
+        {/* 👥 LINEUPS */}
+        <View style={styles.lineupContainer}>
+          <Text style={styles.lineupTitle}>Lineups</Text>
+
+          <View style={styles.lineupRow}>
+            <View style={styles.teamColumn}>
+              <Text style={styles.teamHeader}>Team A</Text>
+              {teamAPlayers.map((id: string) => (
+                <TouchableOpacity
+                  key={id}
+                  style={styles.playerPill}
+                  onPress={() => router.push(`/manageplayers/${id}`)}
+                >
+                  <Ionicons name="person" size={14} color="#22c55e" />
+                  <Text style={styles.playerText}>{playersMap[id]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.teamColumn}>
+              <Text style={styles.teamHeader}>Team B</Text>
+              {teamBPlayers.map((id: string) => (
+                <TouchableOpacity
+                  key={id}
+                  style={styles.playerPill}
+                  onPress={() => router.push(`/manageplayers/${id}`)}
+                >
+                  <Ionicons name="person" size={14} color="#3b82f6" />
+                  <Text style={styles.playerText}>{playersMap[id]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        {/* ⚽ GOALS TIMELINE */}
         <View style={styles.section}>
           {events.map((event: any, index: number) => {
             const isTeamA = event.team === "A";
@@ -148,32 +175,13 @@ export default function MatchDetails() {
           })}
         </View>
       </ScrollView>
-
-      {/* 👤 Player Mini Profile Modal */}
-      <Modal visible={!!selectedPlayer} transparent animationType="fade">
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setSelectedPlayer(null)}
-        >
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{selectedPlayer?.name}</Text>
-            <Text style={styles.modalSubtitle}>
-              Player ID: {selectedPlayer?.id}
-            </Text>
-          </View>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0b1220",
-  },
+  container: { flex: 1, backgroundColor: "#0b1220" },
 
-  /* Top Bar */
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -189,7 +197,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /* Score Header */
   scoreHeader: {
     alignItems: "center",
     paddingVertical: 30,
@@ -197,16 +204,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#1f2937",
   },
 
-  teamName: {
-    color: "#94a3b8",
-    fontSize: 15,
-  },
+  teamName: { color: "#94a3b8", fontSize: 15 },
 
-  scoreRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    // marginVertical: 10,
-  },
+  scoreRow: { flexDirection: "row", alignItems: "center" },
 
   score: {
     fontSize: 54,
@@ -220,15 +220,41 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
 
-  section: {
-    padding: 20,
+  lineupContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1f2937",
   },
 
-  /* Events */
-  eventRow: {
-    marginBottom: 18,
-    flexDirection: "row",
+  lineupTitle: { color: "#94a3b8", fontSize: 13, marginBottom: 10 },
+
+  lineupRow: { flexDirection: "row", justifyContent: "space-between" },
+
+  teamColumn: { width: "48%" },
+
+  teamHeader: {
+    color: "white",
+    fontWeight: "bold",
+    marginBottom: 8,
   },
+
+  playerPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111827",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    marginBottom: 6,
+  },
+
+  playerText: { color: "white", marginLeft: 6, fontSize: 12 },
+
+  section: { padding: 20 },
+
+  eventRow: { marginBottom: 18, flexDirection: "row" },
 
   goalCard: {
     backgroundColor: "#111827",
@@ -238,42 +264,11 @@ const styles = StyleSheet.create({
     maxWidth: "75%",
   },
 
-  goalText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
+  goalText: { color: "white", fontWeight: "bold", fontSize: 14 },
 
   assistText: {
     color: "#38bdf8",
     fontSize: 12,
     marginTop: 4,
-  },
-
-  /* Modal */
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  modalCard: {
-    backgroundColor: "#111827",
-    padding: 24,
-    borderRadius: 20,
-    width: "75%",
-    alignItems: "center",
-  },
-
-  modalTitle: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  modalSubtitle: {
-    color: "#94a3b8",
-    marginTop: 8,
   },
 });
